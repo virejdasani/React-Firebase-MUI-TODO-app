@@ -7,6 +7,10 @@ function App() {
     <div className="App">
       <Navbar />
       <Todos />
+      <p>
+        This project is made only to test some firebase and react functionality.
+        This isn't a finished project
+      </p>
     </div>
   );
 }

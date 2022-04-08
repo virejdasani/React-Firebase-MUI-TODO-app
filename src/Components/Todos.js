@@ -12,28 +12,36 @@ function Todos() {
   const [todos, setTodos] = useState([]);
 
   useEffect(() => {
-    console.log("useEffect Hook");
-    // get the users collection as each user has their own collection
-    db.collection("todos")
+    const unsubscribe = auth.onAuthStateChanged((authUser) => {
+      if (authUser) {
+        console.log(authUser.displayName);
 
-      .orderBy("timestamp", "desc")
-      .onSnapshot((snapshot) => {
-        console.log("Firebase Snap!");
-        setTodos(
-          snapshot.docs.map((doc) => {
-            return {
-              id: doc.id,
-              todoText: doc.data().todoText,
-              timestamp: doc.data().timestamp,
-            };
-          })
-        );
-      });
+        db.collection(auth.currentUser.uid)
+          .orderBy("timestamp", "desc")
+          .onSnapshot((snapshot) => {
+            setTodos(
+              snapshot.docs.map((doc) => {
+                return {
+                  id: doc.id,
+                  todoText: doc.data().todoText,
+                  timestamp: doc.data().timestamp,
+                };
+              })
+            );
+          });
+      } else {
+        // user logged out
+      }
+    });
+    return () => {
+      // cleanup the listener
+      unsubscribe();
+    };
   }, []);
 
   const addTodo = (e) => {
     e.preventDefault();
-    db.collection("todos").add({
+    db.collection(auth.currentUser.uid).doc(input).set({
       todoText: input,
       timestamp: new Date().toISOString(),
     });
@@ -41,7 +49,12 @@ function Todos() {
   };
 
   const deleteTodo = (id) => {
-    db.collection("todos").doc(id).delete();
+    try {
+      db.collection(auth.currentUser.uid).doc(id).delete();
+      console.log("deleted");
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   return (
